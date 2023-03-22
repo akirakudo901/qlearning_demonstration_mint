@@ -49,16 +49,23 @@ class Tictactoe:
         self.state = [E]*9
         return self.state
     
-    # Executes a single step in the environment with 
-    def step(self, state, action):
+    # Executes a single step in the environment, checks for game conditions and return the 
+    # appropriate information:
+    # - what the next state is by taking the action
+    # - what is the reward from taking this action in this state
+    # - if the action has lead to a correct termination of the game (terminated)
+    # - if the action has lead to an incorrect termination - such as choosing a square
+    #   that is already filled (truncated)
+    # - additional info, if any
+    def step(self, action):
         def _chosen_square_is_empty():
-            return (state[action] == EMPTY)
+            return (self.state[action] == EMPTY)
         
         def _update_state():
             new_state = []
-            for i in state:
+            for i in self.state:
                 new_state.append(i) 
-            new_state[action] = Tictactoe.get_turn(state) 
+            new_state[action] = Tictactoe.get_turn(self.state) 
             return new_state
         
         def _get_end_condition(s):
@@ -86,9 +93,10 @@ class Tictactoe:
             #observation; reward; terminated; truncated; info.
         else:
             end_condition = ERROR
-            return state, self.reward_for_error, False, True, ""
+            return self.state, self.reward_for_error, False, True, ""
             #observation; reward; terminated; truncated; info.
 
+    # Prints the current board into the console
     def render(self):
         def _convert_number_to_mark(n):
             if n == EMPTY:
@@ -100,16 +108,14 @@ class Tictactoe:
             
         Tictactoe.print_board(list(map(_convert_number_to_mark, self.state)))
     
+    # Sets the state
     def set_state(self, state):
         self.reset()
         self.state = state
 
-    def get_random_action(self, state):
-        return
-
-
     #Other functions useful on tic tac toe board states
     @staticmethod
+    # Retunrs all empty squares
     def get_empty_squares(state):
         result = []
         for i in range(9):
@@ -118,13 +124,15 @@ class Tictactoe:
         return result
 
     @staticmethod
+    # Retunrs whose turn it is in the given state
     def get_turn(state):
         if len(Tictactoe.get_empty_squares(state)) % 2 == 0:
             return CROSS
         else:
             return CIRCLE
 
-    @staticmethod    
+    @staticmethod   
+    # Prints the given board state into the console 
     def print_board(b):
         print("_______")
         print("|" + b[0] + "|" + b[1] + "|" + b[2] + "|")
@@ -133,6 +141,7 @@ class Tictactoe:
         print("-------")
 
     @staticmethod
+    # Retunrs if the board is terminal (somebody won, or it is a draw)
     def is_terminal(state):
         def _at_least_one_line_is_full_with(s, mark):
             lines = ((0,1,2), (3,4,5), (6,7,8),

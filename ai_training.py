@@ -16,6 +16,9 @@ ______________________________________________
 
 *Agent-environment interaction (step)*
 
+Nice 16 sec illustration of the flow on YouTube!
+https://www.youtube.com/watch?v=-uXVu0l8guo&t=12s
+
 We represent a single "step" of agent-environment interaction as follows:
 1) the agent observes the environment
 2) it chooses action based on observation 
@@ -24,6 +27,7 @@ We represent a single "step" of agent-environment interaction as follows:
 In the next step, the agent observes the new environment state, takes action, 
 which modifies the environment, and so on.
 A single step can be thought of as a single time step in the view of the agent.
+
 ______________________________________________
 
 *Reward function and policy learning*
@@ -54,6 +58,12 @@ We change:
   <- probably the deep learning team's field!
 
 The general flow of problem solving stays the same for most RL problems!
+
+_____________________________________
+SPECIFICS:
+There are lines of code noted with SPECIFICS, which relates to the nature of Q-learning.
+If interested further, read the online article below!
+https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/ 
 
 """
 
@@ -178,7 +188,7 @@ def train():
         # Training loop:
         while not d:
 
-            # TODO EXPLAIN WHAT EPSILON-GREEDY IS?
+            # SPECIFICS: WHAT IS EPSILON-GREEDY?
             # -) choose an action: if epsilon is greater than random value, choose optimal solution so far
             #    otherwise choose an action at random in the action space
             optimal_action = Q.get_optimal_action(s_disc) 
@@ -187,7 +197,7 @@ def train():
             threshold = random.random()
             a = optimal_action if (threshold > epsilon) else random_action
 
-            # TODO DETAILS AS TO HOW THE OPTIMAL SOLUTION IS DETERMINED IN Q LEARNING
+            # SPECIFICS: HOW IS THE OPTIMAL SOLUTION DETERMINED IN Q LEARNING? 
 
             # -) update the environment accordingly given the action, taking: 
             # new state, new reward, done?, info
@@ -209,7 +219,7 @@ def train():
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
         
         # Update qtable appropriately
-        # TODO EXPLAIN HOW QTABLE WORKS HERE?
+        # SPECIFICS: HOW IS THE QTABLE UPDATED?
         Q.update_given_state_action_next_state_pairs_in_time_order(state_action_nextstate_pairs, rEpisode)
 
     # End of training things
@@ -254,7 +264,8 @@ if __name__ == "__main__":
     qtable = None
     if TRAIN_AGENT and False:
         qtable = train()
-    # Evaluation? See it in action, probably + store the result in some way & allow reading.
+    # Evaluation. See it in action, and some metrics! (TODO ADD METRICS! TO COME).
     # evaluate(qtable=qtable)
     evaluate(path="qtable\Cartpole_best_performing.npy")
     
+
