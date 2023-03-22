@@ -1,5 +1,5 @@
 """
-A simple code demonstrating the basic training loop for reinforcement learning through q-learning
+Code demonstrating the basic training loop for reinforcement learning through q-learning
 and epsilon-greedy algorithm.
 
 **WHAT IS REINFORCEMENT LEARNING?**

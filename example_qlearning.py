@@ -1,3 +1,9 @@
+"""
+Example code for RL implementation of the Open AI's gymnasium libraries' cart pole problem with Q learning. 
+Taken from here! Works really well!
+https://medium.com/swlh/using-q-learning-for-openais-cartpole-v1-4a216ef237df
+"""
+
 import numpy as np # used for arrays
 
 import gymnasium as gym # pull the environment
