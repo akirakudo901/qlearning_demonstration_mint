@@ -34,11 +34,11 @@ class Qtable:
     
     # Obtains the current rewward of a state-action pair.
     def get_reward(self, state, action):
-        return self.Q[state, action]
+        return self.Q[state + (action, )]
     
     # Updates the given state action pair's reward.
     def update_state_action_reward(self, state, action, reward):
-        self.Q[state, action] = reward
+        self.Q[state + (action, )] = reward
     
     # Updates the table given a series of state-action-next-state pair in time order, and 
     # the total reward for those series of action.

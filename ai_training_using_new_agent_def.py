@@ -119,7 +119,7 @@ def train():
 
             # -) update the environment accordingly given the action, taking: 
             # new state, new reward, terminated?, truncated?, info
-            n_s, r, terminated, truncated, _ = env.step(a)
+            n_s, _, terminated, truncated, _ = env.step(a)
 
             if terminated or truncated:
                 d = True
@@ -169,8 +169,8 @@ def evaluate(agent=None, path=None):
 
 if __name__ == "__main__":
     #First train, details in train function
-    if TRAIN_AGENT:
+    if TRAIN_AGENT and False:
         env = train()
     # Evaluation? See it in action, probably + store the result in some way & allow reading.
-    evaluate(env)
-    # evaluate(path="qtable\Cartpole_Q_table_2023_3_22_22_37.npy")
+    # evaluate(env)
+    evaluate(path="qtable\Cartpole_Q_table_2023_3_23_0_38.npy")
