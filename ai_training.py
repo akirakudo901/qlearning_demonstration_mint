@@ -92,7 +92,7 @@ class Qtable:
     NP_ARRAY_WIN_SIZE = np.array([0.25, 0.25, 0.01, 0.1])
 
     def __init__(self):
-        discretized_observation = [60, 60, 100, 100] # determines how small we chop the observation space
+        discretized_observation = [30, 30, 50, 60] # determines how small we chop the observation space
         env = gymnasium.make("CartPole-v1")
         self.Q = np.random.uniform(low=0, high=1, size=(discretized_observation + [env.action_space.n]))
         # print(Q.shape)
