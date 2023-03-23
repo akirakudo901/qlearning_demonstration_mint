@@ -72,6 +72,8 @@ https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/
 import gymnasium
 import numpy as np
 import random, time, math
+from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 QTABLE_FOLDER_PATH = "./qtable/"
 DEFAULT_QTABLE_PATH = "./qtable/default.npy/"
@@ -92,7 +94,7 @@ class Qtable:
     NP_ARRAY_WIN_SIZE = np.array([0.25, 0.25, 0.01, 0.1])
 
     def __init__(self):
-        discretized_observation = [60, 60, 100, 100] # determines how small we chop the observation space
+        discretized_observation = [30, 30, 50, 50] # determines how small we chop the observation space
         env = gymnasium.make("CartPole-v1")
         self.Q = np.random.uniform(low=0, high=1, size=(discretized_observation + [env.action_space.n]))
         # print(Q.shape)
@@ -103,11 +105,11 @@ class Qtable:
     
     # "state" is discrete
     def update_state_action_reward(self, state, action, reward):
-        self.Q[state, action] = reward
+        self.Q[state + (action, )] = reward
 
     # "state" is discrete
     def get_reward(self, state, action):
-        return self.Q[state, action]
+        return self.Q[state + (action, )]
     
     # "state" is discrete
     def get_best_reward(self, state):
@@ -164,10 +166,13 @@ def train():
 
     prior_reward = 0
     epsilon = INITIAL_EPSILON
+    reward_overtime = []
+    epsilon_overtime = []
 
     # Single episode loop:
-    for episode in range(EPISODES):
-        if (episode + 1) % PRINT_EVERY_N_EPISODES == 0: print("At loop ", episode + 1, "!")
+    for episode in tqdm(range(EPISODES)):
+        # if (episode + 1) % PRINT_EVERY_N_EPISODES == 0: print("At loop ", episode + 1, "!")
+
         # training:
         # 0) reset the environment (env), and setup appropriate values: 
         # - state of env
@@ -214,6 +219,9 @@ def train():
             rEpisode += r
         
         # Then adjust values accordingly once a single episode loop is over.
+        reward_overtime.append(rEpisode)
+        epsilon_overtime.append(epsilon)
+
         if epsilon > 0.05: #epsilon modification
             if rEpisode > prior_reward and episode > 10000:
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
@@ -227,6 +235,14 @@ def train():
     if SAVE_TRAINING_RESULT:
         # new_table_name = input("Input the name of the new table.\n")
         Q.save_table()
+    # Plot the reward and epsilon change overtime
+    _, ax = plt.subplots()
+    ax.plot(reward_overtime, linewidth=2.0)
+    plt.show()
+
+    _, ax2 = plt.subplots()
+    ax2.plot(epsilon_overtime, linewidth=2.0)
+    plt.show()
 
     return Q
 
@@ -265,7 +281,7 @@ if __name__ == "__main__":
     if TRAIN_AGENT:
         qtable = train()
     # Evaluation. See it in action, and some metrics! (TODO ADD METRICS! TO COME).
-    evaluate(qtable=qtable)
+    # evaluate(qtable=qtable)
     # evaluate(path="qtable\Cartpole_best_performing.npy")
     
 
