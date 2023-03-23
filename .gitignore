@@ -2,5 +2,4 @@
 /cartpole_agent.py
 /environment.py
 /policy_learning_algorithm.py
-/qtable
 /qtable.py
