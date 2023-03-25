@@ -1,10 +1,10 @@
 """
-A code demonstrating the basic training loop for reinforcement learning (RL) through q-learning
+Code demonstrating the basic training loop for reinforcement learning through q-learning
 and epsilon-greedy algorithm.
 
 **WHAT IS REINFORCEMENT LEARNING?**
 
-*The four features of RL*
+*The four features of reinforcement learning (RL)*
 
 RL comes down to four features:
 -) environment - the world that we want to learn from. 
@@ -16,6 +16,9 @@ ______________________________________________
 
 *Agent-environment interaction (step)*
 
+Nice 16 sec illustration of the flow on YouTube!
+https://www.youtube.com/watch?v=-uXVu0l8guo&t=12s
+
 We represent a single "step" of agent-environment interaction as follows:
 1) the agent observes the environment
 2) it chooses action based on observation 
@@ -24,6 +27,7 @@ We represent a single "step" of agent-environment interaction as follows:
 In the next step, the agent observes the new environment state, takes action, 
 which modifies the environment, and so on.
 A single step can be thought of as a single time step in the view of the agent.
+
 ______________________________________________
 
 *Reward function and policy learning*
@@ -55,20 +59,27 @@ We change:
 
 The general flow of problem solving stays the same for most RL problems!
 
+_____________________________________
+SPECIFICS:
+There are lines of code noted with SPECIFICS, which relates to the nature of Q-learning.
+If interested further, read the online article below!
+https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/ 
+
 """
+
 
 # First install dependencies as required through:
 # pip install gymnasium
-import gymnasium
-import random, math
+import random, math, tqdm
 
 import cartpole_agent
 
-QTABLE_FOLDER_PATH = "./qtable/"
-DEFAULT_QTABLE_PATH = "./qtable/default.npy/"
+# the environment object to be used for training and evaluation
+env_object = cartpole_agent.CartpoleAgent
 
+# parameters related to training
 EPISODES = 60000
-PRINT_EVERY_N_EPISODES = EPISODES / 25
+# related to q-learning specifically?
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.95
 INITIAL_EPSILON = 1 # probability for exploration
@@ -78,6 +89,7 @@ RENDER_TRAINING = False
 SAVE_TRAINING_RESULT = True
 TRAIN_AGENT = True
 
+
 #+++++++++++++++++++++++++++++++++++++++
 #Training
 
@@ -86,14 +98,13 @@ def train():
     # - the environment (CartPole-v1 here) and 
     # - the learning algorithm (Q learning here)
     r_m = "human" if RENDER_TRAINING else None
-    env = cartpole_agent.CartpoleAgent(l_r=LEARNING_RATE, d_r= DISCOUNT_RATE,r_m=r_m)
+    env = env_object(l_r=LEARNING_RATE, d_r= DISCOUNT_RATE,r_m=r_m)
 
     prior_reward = 0
     epsilon = INITIAL_EPSILON
 
     # Single episode loop:
-    for episode in range(EPISODES):
-        if (episode + 1) % PRINT_EVERY_N_EPISODES == 0: print("At loop ", episode + 1, "!")
+    for episode in tqdm.tqdm(range(EPISODES)):
         # training:
         # 0) reset the environment (env), and setup appropriate values: 
         # - state of env
@@ -108,17 +119,17 @@ def train():
         # Training loop:
         while not d:
 
-            # TODO EXPLAIN WHAT EPSILON-GREEDY IS?
+            # SPECIFICS: WHAT IS EPSILON-GREEDY?
             # -) choose an action: if epsilon is greater than random value, choose optimal solution so far
             #    otherwise choose an action at random in the action space
-
+            
             threshold = random.random()
             a = env.get_optimal_action(s) if (threshold > epsilon) else env.get_random_action(s)
 
-            # TODO DETAILS AS TO HOW THE OPTIMAL SOLUTION IS DETERMINED IN Q LEARNING
+            # SPECIFICS: HOW IS THE OPTIMAL SOLUTION DETERMINED IN Q LEARNING? 
 
             # -) update the environment accordingly given the action, taking: 
-            # new state, new reward, terminated?, truncated?, info
+            # new state, new reward, done?, info
             n_s, _, terminated, truncated, _ = env.step(a)
 
             if terminated or truncated:
@@ -129,6 +140,8 @@ def train():
         
         # Once episode is over:
         # Update learning algorithm
+        # SPECIFICS: HOW IS THE QTABLE UPDATED?
+        
         env.update()
 
         # Then adjust values accordingly
@@ -149,11 +162,13 @@ def train():
 
 def evaluate(agent=None, path=None):
     if agent is None:
-        agent = cartpole_agent.CartpoleAgent(l_r=LEARNING_RATE, d_r=DISCOUNT_RATE)
+        agent = env_object(l_r=LEARNING_RATE, d_r=DISCOUNT_RATE)
         agent.algorithm.load(path)
+    else:
+        print("agent is not None; path will not be considered.")
 
     # Evaluation loop:
-    env_eval = gymnasium.make("CartPole-v1", render_mode="human")
+    env_eval = env_object(r_m="human")
     s, _ = env_eval.reset() #reset the environment
     terminated = truncated = False
 
@@ -169,8 +184,8 @@ def evaluate(agent=None, path=None):
 
 if __name__ == "__main__":
     #First train, details in train function
-    if TRAIN_AGENT and False:
+    if TRAIN_AGENT:
         env = train()
     # Evaluation? See it in action, probably + store the result in some way & allow reading.
-    # evaluate(env)
-    evaluate(path="qtable\Cartpole_Q_table_2023_3_23_0_38.npy")
+    evaluate(env)
+    # evaluate(path="qtable\Cartpole_Q_table_2023_3_23_0_38.npy")

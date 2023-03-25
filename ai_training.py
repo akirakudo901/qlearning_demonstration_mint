@@ -71,13 +71,12 @@ https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/
 # pip install gymnasium
 import gymnasium
 import numpy as np
-import random, time, math
+import random, time, math, tqdm
 
 QTABLE_FOLDER_PATH = "./qtable/"
 DEFAULT_QTABLE_PATH = "./qtable/default.npy/"
 
 EPISODES = 60000
-PRINT_EVERY_N_EPISODES = EPISODES / 25
 ALPHA = 0.1 # learning rate
 GAMMA = 0.95 # discount rate
 INITIAL_EPSILON = 1 # probability for exploration
@@ -166,8 +165,7 @@ def train():
     epsilon = INITIAL_EPSILON
 
     # Single episode loop:
-    for episode in range(EPISODES):
-        if (episode + 1) % PRINT_EVERY_N_EPISODES == 0: print("At loop ", episode + 1, "!")
+    for episode in tqdm.tqdm(range(EPISODES)):
         # training:
         # 0) reset the environment (env), and setup appropriate values: 
         # - state of env
