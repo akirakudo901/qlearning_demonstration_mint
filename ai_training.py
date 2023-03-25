@@ -102,11 +102,11 @@ class Qtable:
     
     # "state" is discrete
     def update_state_action_reward(self, state, action, reward):
-        self.Q[state, action] = reward
+        self.Q[state + (action, )] = reward
 
     # "state" is discrete
     def get_reward(self, state, action):
-        return self.Q[state, action]
+        return self.Q[state + (action, )]
     
     # "state" is discrete
     def get_best_reward(self, state):
