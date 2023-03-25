@@ -2,7 +2,8 @@
 
 A quick introduction to general flow of RL!
 
-ai_training.py gives an overview of RL and an example code.
+qlearning_demonstration_MINT_notebook.ipynb is a Jupyter notebook giving an overview of RL and an example code.
+ai_training.py does the same thing entirely in Python code.
 
 environment_ttt.py is an example of RL environment I implemented a couple years ago. 
 Might give you some insights into designing one. 
