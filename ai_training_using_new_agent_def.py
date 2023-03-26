@@ -72,7 +72,7 @@ https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/
 # pip install gymnasium
 import random, math, tqdm
 
-import cartpole_agent
+import agents.cartpole_agent as cartpole_agent
 
 # the environment object to be used for training and evaluation
 env_object = cartpole_agent.CartpoleAgent

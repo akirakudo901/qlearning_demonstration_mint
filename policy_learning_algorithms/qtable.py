@@ -3,6 +3,11 @@ A class representing a qtable.
 Functionalities include:
 - initializing a qtable of given shape
 - get_optimal_action
+- get_best_reward
+- get_reward
+- update
+- save
+- load 
 """
 
 import numpy as np
@@ -36,10 +41,6 @@ class Qtable:
     def get_reward(self, state, action):
         return self.Q[state + (action, )]
     
-    # Updates the given state action pair's reward.
-    def update_state_action_reward(self, state, action, reward):
-        self.Q[state + (action, )] = reward
-    
     # Updates the table given a series of state-action-next-state pair in time order, and 
     # the total reward for those series of action.
     def update(self, pairs, rEpisode):
@@ -47,7 +48,7 @@ class Qtable:
         for pair in pairs:
             s, a, n_s = pair[0], pair[1], pair[2]
             updated_r = self.get_reward(s, a) + self.learning_rate * (rEpisode + self.discount_rate * (self.get_best_reward(n_s) - self.get_reward(s, a)))
-            self.update_state_action_reward(s, a, updated_r)
+            self.Q[s + (a, )] = updated_r
 
     # saves the table into a .npy file
     def save(self, name=None):
