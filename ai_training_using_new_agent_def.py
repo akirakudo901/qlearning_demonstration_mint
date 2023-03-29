@@ -71,14 +71,19 @@ https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/
 # First install dependencies as required through:
 # pip install gymnasium
 import random, math, tqdm
+import matplotlib.pyplot as plt
 
-import agents.cartpole_agent as cartpole_agent
+import agents.cartpole_qtable_agent as cartpole_qtable_agent
+import agents.cartpole_dnn_agent as cartpole_dnn_agent
 
 # the environment object to be used for training and evaluation
-env_object = cartpole_agent.CartpoleAgent
+# env_object = cartpole_qtable_agent.CartpoleQtableAgent
+
+env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 60000
+EPISODES = 100000
+SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
 # related to q-learning specifically?
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.95
@@ -102,6 +107,7 @@ def train():
 
     prior_reward = 0
     epsilon = INITIAL_EPSILON
+    episode_reward_over_time = []
 
     # Single episode loop:
     for episode in tqdm.tqdm(range(EPISODES)):
@@ -145,14 +151,20 @@ def train():
         env.update()
 
         # Then adjust values accordingly
+        episode_reward_over_time.append(env.episode_reward)
+
         if epsilon > 0.05: #epsilon modification
             if env.episode_reward > prior_reward and episode > 10000:
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
 
+        if episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0: evaluate(env)
+
     # End of training things
     env.close() # close the training env
     if SAVE_TRAINING_RESULT:
-        env.algorithm.save()
+        env.save()
+    
+
 
     return env
 
@@ -163,9 +175,9 @@ def train():
 def evaluate(agent=None, path=None):
     if agent is None:
         agent = env_object(l_r=LEARNING_RATE, d_r=DISCOUNT_RATE)
-        agent.algorithm.load(path)
+        agent.load(path)
     else:
-        print("agent is not None; path will not be considered.")
+        print("\n agent is not None; path will not be considered. \n")
 
     # Evaluation loop:
     env_eval = env_object(r_m="human")
