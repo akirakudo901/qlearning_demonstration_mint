@@ -70,10 +70,12 @@ https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/
 
 # First install dependencies as required through:
 # pip install gymnasium
-import random, math, tqdm
+import math, random
+ 
 import matplotlib.pyplot as plt
+import tqdm
 
-import agents.cartpole_qtable_agent as cartpole_qtable_agent
+# import agents.cartpole_qtable_agent as cartpole_qtable_agent
 import agents.cartpole_dnn_agent as cartpole_dnn_agent
 
 # the environment object to be used for training and evaluation
@@ -82,8 +84,9 @@ import agents.cartpole_dnn_agent as cartpole_dnn_agent
 env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 100000
+EPISODES = 100
 SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
+EXPLORATION_EPISODES = EPISODES / 6
 # related to q-learning specifically?
 LEARNING_RATE = 0.1
 DISCOUNT_RATE = 0.95
@@ -107,7 +110,8 @@ def train():
 
     prior_reward = 0
     epsilon = INITIAL_EPSILON
-    episode_reward_over_time = []
+    reward_over_time = []
+    epsilon_over_time = []
 
     # Single episode loop:
     for episode in tqdm.tqdm(range(EPISODES)):
@@ -151,20 +155,30 @@ def train():
         env.update()
 
         # Then adjust values accordingly
-        episode_reward_over_time.append(env.episode_reward)
+        reward_over_time.append(env.episode_reward)
+        epsilon_over_time.append(epsilon)
 
         if epsilon > 0.05: #epsilon modification
-            if env.episode_reward > prior_reward and episode > 10000:
-                epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
+            if env.episode_reward > prior_reward and episode > EXPLORATION_EPISODES:
+                epsilon = math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)
 
-        if episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0: evaluate(env)
+        if episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0:
+            print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
+            print("\naction_one_parameters: \n", list(env.dnn_action_one.parameters()))
+            evaluate(env)
 
     # End of training things
     env.close() # close the training env
     if SAVE_TRAINING_RESULT:
         env.save()
     
+    _, ax = plt.subplots()
+    ax.plot(reward_over_time, linewidth=2.0)
+    plt.show()
 
+    _, ax2 = plt.subplots()
+    ax2.plot(epsilon_over_time, linewidth=2.0)
+    plt.show()
 
     return env
 

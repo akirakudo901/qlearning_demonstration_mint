@@ -6,8 +6,9 @@ Since the problem is continuous but q learning deals with discrete environments,
 takes up the task of converting continuous into discrete.
 """
 
-import numpy as np
 import gymnasium
+import numpy as np
+
 import policy_learning_algorithms.qtable as qtable
 
 class CartpoleQtableAgent:

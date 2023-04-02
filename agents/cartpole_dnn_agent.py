@@ -3,12 +3,13 @@ Cart pole agent that learns through deep neural networks, combining a DNN with
 an environment.
 """
 
-import gymnasium
 import numpy as np
+import gymnasium
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+import torch.optim as optim
 
 class CartpoleDNNAgent:
 
@@ -19,20 +20,26 @@ class CartpoleDNNAgent:
             super(CartpoleDNNAgent.DNN, self).__init__()
             
             # - an input layer of size four
-            self.fc1 = nn.Linear(4, 8)
-            # - one hidden layer with 8 neurons, and final output of 2
-            self.fc2 = nn.Linear(8, 2)
+            self.fc1 = nn.Linear(4, 5)
+            # - one hidden layer with 8 neurons
+            # self.fc2 = nn.Linear(8, 8)
+            # - another hidden layer with 8 more neurons and 2 outputs
+            self.fc3 = nn.Linear(5, 1)
 
         def forward(self, x):
             x = F.relu(self.fc1(x))
-            x = self.fc2(x)
+            # x = F.relu(self.fc2(x))
+            x = self.fc3(x)
             return x
     
     def __init__(self, l_r=0.1, d_r=0.95, r_m=None):
         self.env = gymnasium.make("CartPole-v1", render_mode=r_m)
         self.learning_rate = l_r
         self.discount_rate = d_r
-        self.dnn = CartpoleDNNAgent.DNN()
+        self.dnn_action_zero = CartpoleDNNAgent.DNN()
+        self.dnn_action_one = CartpoleDNNAgent.DNN()
+        self.optimizer_zero = optim.SGD(self.dnn_action_zero.parameters(), lr=0.01)
+        self.optimizer_one = optim.SGD(self.dnn_action_one.parameters(), lr=0.01)
 
         self.state = None
         self.episode_state_action_pairs = []
@@ -40,7 +47,10 @@ class CartpoleDNNAgent:
     
     # "state" is a tuple of four values
     def get_optimal_action(self, state):
-        return torch.argmax(self.estimate_q_values(state)).item()
+        if (self.estimate_q_values_action_zero(state).item() <= self.estimate_q_values_action_one(state).item()):
+            return 1
+        else:
+            return 0
     
     # TODO later
     def save(self):
@@ -78,22 +88,28 @@ class CartpoleDNNAgent:
         self.episode_state_action_pairs.reverse()
         for pair in self.episode_state_action_pairs:
             s, a, n_s = pair[0], pair[1], pair[2]
-            estimate = self.estimate_q_values(s)
-            curr_q = estimate[a]
-            best_next_reward = torch.argmax(self.estimate_q_values(n_s))
-            corrected_reward = curr_q + self.learning_rate * (self.episode_reward + self.discount_rate * (best_next_reward - curr_q))
-            self.dnn.zero_grad()
+            estimate_q_values = self.estimate_q_values_action_zero if (a == 0) else self.estimate_q_values_action_one
+            appropriate_optim = self.optimizer_zero if (a == 0) else self.optimizer_one
+            
+            best_next_reward = torch.max(torch.tensor( [
+                self.estimate_q_values_action_zero(n_s).item(), 
+                self.estimate_q_values_action_one(n_s).item() ]))
+            
+            appropriate_optim.zero_grad()
 
-            other_action_q = estimate[1 - a].item()
+            curr_q = estimate_q_values(s)
+            
+            corrected_reward = self.learning_rate * (self.episode_reward + self.discount_rate * (best_next_reward - curr_q))
+            corrected_reward_sq = corrected_reward * corrected_reward
+            # other_action_q = q_for_both_action[1 - a].item() # 1-a is 0 if a = 1, 1 if a = 0
 
-            if a == 0:
-                # print([corrected_reward, other_action_q])
-                estimate.backward(torch.tensor( [corrected_reward, other_action_q] ))
-            else:
-                # print([other_action_q, corrected_reward])
-                estimate.backward(torch.tensor( [other_action_q, corrected_reward] ))
-
-
+            corrected_reward_sq.backward()
+            appropriate_optim.step()
+            # optimizer.zero_grad()   # zero the gradient buffers
+            # output = net(input)
+            # loss = criterion(output, target)
+            # loss.backward()
+            # optimizer.step()    # Does the update
     
     # Gets a random action in the action space; has to be re-defined for each action.
     def get_random_action(self, state):
@@ -103,7 +119,12 @@ class CartpoleDNNAgent:
     def close(self):
         self.env.close()
 
-    def estimate_q_values(self, state):
+    def estimate_q_values_action_zero(self, state):
         state_tensor = torch.tensor(state)
         state_with_fake_minibatch_dim = state_tensor.unsqueeze(0)
-        return self.dnn(state_with_fake_minibatch_dim)[0]
+        return self.dnn_action_zero(state_with_fake_minibatch_dim) 
+
+    def estimate_q_values_action_one(self, state):
+        state_tensor = torch.tensor(state)
+        state_with_fake_minibatch_dim = state_tensor.unsqueeze(0)
+        return self.dnn_action_one(state_with_fake_minibatch_dim)
