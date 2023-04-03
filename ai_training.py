@@ -225,6 +225,7 @@ def train():
         if epsilon > 0.05: #epsilon modification
             if rEpisode > prior_reward and episode > 10000:
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
+                prior_reward = rEpisode
         
         # Update qtable appropriately
         # SPECIFICS: HOW IS THE QTABLE UPDATED?
@@ -238,10 +239,12 @@ def train():
     # Plot the reward and epsilon change overtime
     _, ax = plt.subplots()
     ax.plot(reward_overtime, linewidth=2.0)
+    plt.title("Reward over time")
     plt.show()
 
     _, ax2 = plt.subplots()
     ax2.plot(epsilon_overtime, linewidth=2.0)
+    plt.title("Epsilon over time")
     plt.show()
 
     return Q
@@ -278,10 +281,12 @@ def evaluate(qtable=None, path=None):
 if __name__ == "__main__":
     #First train, details in train function
     qtable = None
-    if TRAIN_AGENT:
+    if TRAIN_AGENT and False:
         qtable = train()
     # Evaluation. See it in action, and some metrics! (TODO ADD METRICS! TO COME).
     # evaluate(qtable=qtable)
     # evaluate(path="qtable\Cartpole_best_performing.npy")
-    
+    evaluate(path="qtable\Cartpole_Q_table_prior_is_max.npy")
+    evaluate(path="qtable\Cartpole_Q_table_prior_is_prior.npy")
+    evaluate(path="qtable\Cartpole_Q_table_prior_is_zero.npy")
 
