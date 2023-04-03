@@ -73,8 +73,8 @@ import gymnasium
 import numpy as np
 import random, time, math, tqdm
 
-QTABLE_FOLDER_PATH = "./qtable/"
-DEFAULT_QTABLE_PATH = "./qtable/default.npy/"
+QTABLE_FOLDER_PATH = "./qtables/"
+DEFAULT_QTABLE_PATH = "./qtables/default.npy/"
 
 EPISODES = 60000
 ALPHA = 0.1 # learning rate
@@ -216,6 +216,8 @@ def train():
             if rEpisode > prior_reward and episode > 10000:
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - 10000)
         
+        prior_reward = rEpisode
+        
         # Update qtable appropriately
         # SPECIFICS: HOW IS THE QTABLE UPDATED?
         Q.update_given_state_action_next_state_pairs_in_time_order(state_action_nextstate_pairs, rEpisode)
@@ -263,7 +265,7 @@ if __name__ == "__main__":
     if TRAIN_AGENT and False:
         qtable = train()
     # Evaluation. See it in action, and some metrics! (TODO ADD METRICS! TO COME).
-    # evaluate(qtable=qtable)
-    evaluate(path="qtable\Cartpole_best_performing.npy")
+    evaluate(qtable=qtable)
+    # evaluate(path="qtables\Cartpole_Q_table_2023_4_3_12_40.npy")
     
 

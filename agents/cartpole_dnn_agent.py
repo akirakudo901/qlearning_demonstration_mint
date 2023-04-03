@@ -38,13 +38,12 @@ class CartpoleDNNAgent:
         self.discount_rate = d_r
         self.dnn_action_zero = CartpoleDNNAgent.DNN()
         self.dnn_action_one = CartpoleDNNAgent.DNN()
-        self.optimizer_zero = optim.SGD(self.dnn_action_zero.parameters(), lr=0.01)
-        self.optimizer_one = optim.SGD(self.dnn_action_one.parameters(), lr=0.01)
+
+        self.optim_zero = optim.SGD(self.dnn_action_zero.parameters(), lr=self.learning_rate)
+        self.optim_one = optim.SGD(self.dnn_action_one.parameters(), lr=self.learning_rate)
 
         self.state = None
-        self.episode_state_action_pairs = []
-        self.episode_reward = 0
-    
+        
     # "state" is a tuple of four values
     def get_optimal_action(self, state):
         if (self.estimate_q_values_action_zero(state).item() <= self.estimate_q_values_action_one(state).item()):
@@ -63,8 +62,6 @@ class CartpoleDNNAgent:
     # Resets the environment
     def reset(self):
         self.state, info = self.env.reset()
-        self.episode_state_action_pairs = []
-        self.episode_reward = 0
         return self.state, info
     
     # Takes a step in the environment with the given action, and returns:
@@ -78,38 +75,36 @@ class CartpoleDNNAgent:
         n_s, r, terminated, truncated, info = self.env.step(action)
         self.state = n_s
         # Update info required for retraining of Q table at the end
-        self.episode_state_action_pairs.append([s_before_action, action, n_s])
-        self.episode_reward += r
+        self.update_reward(s_before_action, action, r, n_s)
         # return info
         return n_s, r, terminated, truncated, info
     
-    # Updates the algorithm accordingly
+    # Updates the algorithm at the end of episode; in this case, does nothing
     def update(self):
-        self.episode_state_action_pairs.reverse()
-        for pair in self.episode_state_action_pairs:
-            s, a, n_s = pair[0], pair[1], pair[2]
-            estimate_q_values = self.estimate_q_values_action_zero if (a == 0) else self.estimate_q_values_action_one
-            appropriate_optim = self.optimizer_zero if (a == 0) else self.optimizer_one
-            
-            best_next_reward = torch.max(torch.tensor( [
-                self.estimate_q_values_action_zero(n_s).item(), 
-                self.estimate_q_values_action_one(n_s).item() ]))
-            
-            appropriate_optim.zero_grad()
+        pass
 
-            curr_q = estimate_q_values(s)
-            
-            corrected_reward = self.learning_rate * (self.episode_reward + self.discount_rate * (best_next_reward - curr_q))
-            corrected_reward_sq = corrected_reward * corrected_reward
-            # other_action_q = q_for_both_action[1 - a].item() # 1-a is 0 if a = 1, 1 if a = 0
+    # Updates the algorithm accordingly
+    def update_reward(self, s, a, r, n_s):
+        estimate_q_values = self.estimate_q_values_action_zero if (a == 0) else self.estimate_q_values_action_one
+        appropriate_optim = self.optim_zero if (a == 0) else self.optim_one
+        
+        best_next_reward = torch.max(torch.tensor( [
+            self.estimate_q_values_action_zero(n_s).item(), 
+            self.estimate_q_values_action_one(n_s).item()
+            ] ))
 
-            corrected_reward_sq.backward()
-            appropriate_optim.step()
-            # optimizer.zero_grad()   # zero the gradient buffers
-            # output = net(input)
-            # loss = criterion(output, target)
-            # loss.backward()
-            # optimizer.step()    # Does the update
+        appropriate_optim.zero_grad()
+        
+        curr_q = estimate_q_values(s)
+        
+        corrected_reward = r + self.discount_rate * best_next_reward
+        dim_correct = corrected_reward.unsqueeze(0).unsqueeze(0)
+
+        loss_fn = nn.MSELoss()
+        loss = loss_fn(curr_q, dim_correct)
+        loss.backward()
+
+        appropriate_optim.step()
     
     # Gets a random action in the action space; has to be re-defined for each action.
     def get_random_action(self, state):
