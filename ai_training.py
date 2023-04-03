@@ -281,12 +281,12 @@ def evaluate(qtable=None, path=None):
 if __name__ == "__main__":
     #First train, details in train function
     qtable = None
-    if TRAIN_AGENT and False:
+    if TRAIN_AGENT and True:
         qtable = train()
     # Evaluation. See it in action, and some metrics! (TODO ADD METRICS! TO COME).
-    # evaluate(qtable=qtable)
+    evaluate(qtable=qtable)
     # evaluate(path="qtable\Cartpole_best_performing.npy")
-    evaluate(path="qtable\Cartpole_Q_table_prior_is_max.npy")
-    evaluate(path="qtable\Cartpole_Q_table_prior_is_prior.npy")
-    evaluate(path="qtable\Cartpole_Q_table_prior_is_zero.npy")
+    # evaluate(path="qtable\Cartpole_Q_table_prior_is_max.npy")
+    # evaluate(path="qtable\Cartpole_Q_table_prior_is_prior.npy")
+    # evaluate(path="qtable\Cartpole_Q_table_prior_is_zero.npy")
 
