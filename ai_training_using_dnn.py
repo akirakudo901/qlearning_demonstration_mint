@@ -84,7 +84,7 @@ import agents.cartpole_dnn_agent as cartpole_dnn_agent
 env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 10000
+EPISODES = 300000
 SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
 EXPLORATION_EPISODES = EPISODES / 6
 # related to q-learning specifically?
@@ -96,6 +96,7 @@ EPSILON_DECAY_VALUE = 0.99995
 RENDER_TRAINING = False
 SAVE_TRAINING_RESULT = True
 TRAIN_AGENT = True
+EVALUATE_DURING_TRAINING = False
 
 
 #+++++++++++++++++++++++++++++++++++++++
@@ -141,7 +142,7 @@ def train():
 
             # -) update the environment accordingly given the action, taking: 
             # new state, new reward, done?, info
-            n_s, r, terminated, truncated, _ = env.step_and_update(a)
+            n_s, r, terminated, truncated, _ = env.step_and_update(a, (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0))
             episode_reward += r
 
             if terminated or truncated:
@@ -165,7 +166,7 @@ def train():
                 epsilon = math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)
                 prior_reward = episode_reward
         
-        if episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0:
+        if (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0) and EVALUATE_DURING_TRAINING:
             # TOREMOVE
             # print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
             # print("\naction_one_parameters: \n", list(env.dnn_action_one.parameters()))
@@ -178,6 +179,7 @@ def train():
     
     _, ax = plt.subplots()
     ax.plot(reward_over_time, linewidth=2.0)
+    plt.title("reward over time")
     plt.show()
 
     _, ax2 = plt.subplots()
@@ -196,7 +198,8 @@ def train():
 def evaluate(agent=None, path=None):
     if agent is None:
         agent = env_object(l_r=LEARNING_RATE, d_r=DISCOUNT_RATE)
-        agent.load(path)
+        # agent.load(path)
+        agent.load()
     else:
         pass
         # print("\n agent is not None; path will not be considered. \n")
@@ -212,14 +215,14 @@ def evaluate(agent=None, path=None):
         a = agent.get_optimal_action(s)
 
         # update env accordingly
-        s, _, terminated, truncated, _ = env_eval.step_and_update(a)
+        s, _, terminated, truncated, _ = env_eval.step(a)
 
     env_eval.close()
 
 if __name__ == "__main__":
     #First train, details in train function
-    if TRAIN_AGENT:
+    if TRAIN_AGENT and True:
         env = train()
     # Evaluation? See it in action, probably + store the result in some way & allow reading.
     evaluate(env)
-    # evaluate(path="qtable\Cartpole_Q_table_2023_3_23_0_38.npy")
+    # evaluate()
