@@ -65,6 +65,9 @@ There are lines of code noted with SPECIFICS, which relates to the nature of Q-l
 If interested further, read the online article below!
 https://blog.floydhub.com/an-introduction-to-q-learning-reinforcement-learning/ 
 
+Recently:
+- Tried to add a penalty when the simulation terminates with pole falling; didn't quite work
+
 """
 
 
@@ -84,14 +87,15 @@ import agents.cartpole_dnn_agent as cartpole_dnn_agent
 env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 300000
+EPISODES = 10000
 SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
 EXPLORATION_EPISODES = EPISODES / 6
+UPDATER_SECOND_DNNS_EVERY_N = 10000
 # related to q-learning specifically?
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.01
 DISCOUNT_RATE = 0.95
-INITIAL_EPSILON = 1 # probability for exploration
-EPSILON_DECAY_VALUE = 0.99995
+INITIAL_EPSILON = 0.5 # probability for exploration
+EPSILON_DECAY_VALUE = 0.9995
 
 RENDER_TRAINING = False
 SAVE_TRAINING_RESULT = True
@@ -128,6 +132,8 @@ def train():
         d = False
         episode_reward = 0
 
+        second_dnn_update_count = 0
+
         # Training loop:
         while not d:
 
@@ -144,6 +150,12 @@ def train():
             # new state, new reward, done?, info
             n_s, r, terminated, truncated, _ = env.step_and_update(a, (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0))
             episode_reward += r
+
+            # update the second dnns appropriately
+            second_dnn_update_count += 1
+            if second_dnn_update_count == UPDATER_SECOND_DNNS_EVERY_N:
+                second_dnn_update_count = 0
+                env.update_second_dnns()
 
             if terminated or truncated:
                 d = True
@@ -163,14 +175,16 @@ def train():
 
         if epsilon > 0.05: #epsilon modification
             if episode_reward > prior_reward and episode > EXPLORATION_EPISODES:
-                epsilon = math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)
-                prior_reward = episode_reward
+                epsilon = INITIAL_EPSILON * math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)
         
-        if (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0) and EVALUATE_DURING_TRAINING:
+        prior_reward = episode_reward
+        
+        if (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0):
             # TOREMOVE
             # print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
             # print("\naction_one_parameters: \n", list(env.dnn_action_one.parameters()))
-            evaluate(env)
+            if EVALUATE_DURING_TRAINING:
+                evaluate(env)
 
     # End of training things
     env.close() # close the training env
