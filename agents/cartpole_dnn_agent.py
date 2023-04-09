@@ -46,14 +46,12 @@ class CartpoleDNNAgent:
                 nn.Linear(4, 8),
                 nn.Sigmoid(),
                 # nn.ReLU(),
-                # - one hidden layer with 8 neurons
                 # nn.Linear(8, 8),
                 # nn.Sigmoid(), 
                 # nn.ReLU(),
                 nn.Linear(8, 16),
                 nn.Sigmoid(),
                 # nn.ReLU(),
-                # - another hidden layer with 8 more neurons and 2 outputs
                 nn.Linear(16, 1),
             )
 
@@ -123,13 +121,13 @@ class CartpoleDNNAgent:
     #  - if the episode was corretly terminated (boolean; terminated)
     #  - if the episode was incorrectly terminated (boolean; truncated)
     #  - additional info
-    def step_and_update(self, action, tbremoved):
+    def step_and_update(self, action):
         s_before_action = self.state
         n_s, r, terminated, truncated, info = self.env.step(action)
         self.state = n_s
         if terminated: r = -1
         # Update info required for retraining of Q table at the end
-        self.update_reward(s_before_action, action, r, n_s, tbremoved)
+        self.update_reward(s_before_action, action, r, n_s)
         # return info
         return n_s, r, terminated, truncated, info
     
@@ -147,15 +145,13 @@ class CartpoleDNNAgent:
         pass
 
     # Updates the algorithm accordingly
-    def update_reward(self, s, a, r, n_s, tbremoved):
+    def update_reward(self, s, a, r, n_s):
         action_dnn = self.dnn_action_zero if (a == 0) else self.dnn_action_one
         appropriate_optim = self.optim_zero if (a == 0) else self.optim_one
         
         best_next_reward = torch.max(torch.tensor([
             self.estimate_q_values(self.dnn_action_zero_q, n_s).item(), 
             self.estimate_q_values(self.dnn_action_one_q, n_s).item()
-            # self.estimate_q_values(self.dnn_action_zero_q, n_s).item(), 
-            # self.estimate_q_values(self.dnn_action_one_q, n_s).item()
             ]))
 
         
@@ -171,8 +167,7 @@ class CartpoleDNNAgent:
         loss.backward()
         appropriate_optim.step()
 
-        self.buffer.append( [s, a, r, n_s] )
-        # if tbremoved: print("action: ", a, "curr_q: ", curr_q, "corrected_reward: ", corrected_reward, "loss: ", loss)  
+        self.buffer.append( [s, a, r, n_s] )  
     
     def update_second_dnns(self):
         
