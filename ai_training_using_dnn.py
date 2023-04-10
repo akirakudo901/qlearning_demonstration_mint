@@ -88,7 +88,7 @@ import agents.cartpole_dnn_agent as cartpole_dnn_agent
 env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 5000 #with l_r=0.005, d_r=0.95, init_eps=0.5 and decay_val=0.9995, eps = 0.05 by 15000
+EPISODES = 5000
 SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
 EXPLORATION_EPISODES = EPISODES / 6
 # related to q-learning specifically?
@@ -167,7 +167,7 @@ def train():
         # SPECIFICS: HOW IS THE QTABLE UPDATED?
         
         env.update()
-
+        
         # Then adjust values accordingly
         last_ten_episode_reward.append(episode_reward)
         if len(last_ten_episode_reward) == 10:
@@ -185,7 +185,7 @@ def train():
         
         prior_reward = episode_reward
         
-        if (episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0):
+        if (episode != 0 and episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0):
             # TOREMOVE
             # print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
             # print("\naction_one_parameters: \n", list(env.dnn_action_one.parameters()))
@@ -244,8 +244,8 @@ def evaluate(agent=None, path=None):
 
 if __name__ == "__main__":
     #First train, details in train function
-    if TRAIN_AGENT and False:
+    if TRAIN_AGENT and True:
         env = train()
     # Evaluation? See it in action, probably + store the result in some way & allow reading.
-    # evaluate(env)
-    evaluate(path="dnns\Cartpole_DNN_best_performing.pth")
+    evaluate(env)
+    # evaluate(path="dnns\Cartpole_DNN_best_performing.pth")

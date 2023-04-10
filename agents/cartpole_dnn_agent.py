@@ -20,7 +20,7 @@ import torch.optim as optim
 DNN_SAVE_FOLDER = "./dnns"
 
 UPDATE_TARGET_DNN_EVERY_N = 4096
-MAX_BUFFER_SIZE = 512
+MAX_BUFFER_SIZE = 4096
 
 def set_device():
     """
@@ -80,7 +80,9 @@ class CartpoleDNNAgent:
         
     # "state" is a tuple of four values
     def get_optimal_action(self, state):
-        return torch.argmax(self.estimate_q_values(self.dnn_policy, state)).item()
+        state_tensor = torch.tensor(state).to(CartpoleDNNAgent.DEVICE).unsqueeze(0)
+        prediction = self.dnn_policy(state_tensor)
+        return torch.argmax(prediction).item()
     
     # TODO later
     def save(self, path=None):
@@ -121,101 +123,54 @@ class CartpoleDNNAgent:
         
     # Updates the algorithm at the end of episode
     def update(self):
-        minibatch_size = 128
+        BATCH_SIZE = 32
+        EPOCHS = 12
+        ACTION_NUM = 2
 
         if len(self.buffer) > MAX_BUFFER_SIZE:
             self.buffer.reverse() #ensures that newest experience at end is kept
             self.buffer = self.buffer[:MAX_BUFFER_SIZE]
-
-        random.shuffle(self.buffer)
+        elif len(self.buffer) < BATCH_SIZE: #if buffer too small, pass
+            return
         
         loss_fn = nn.MSELoss()
-        target_update_count = 0
 
-        for experience in self.buffer[:minibatch_size]:
-            s, a, r, n_s = experience
-            # obtain the current estimate
-            current_q_val = self.estimate_q_values(self.dnn_policy, s)
-            # obtain the future best reward
-            best_next_reward = torch.max(self.estimate_q_values(self.dnn_target, n_s))
-            # obtain the updated q value based on the best reward, discount and reward r
-            updated_q_val = r + self.discount * best_next_reward
-            if a == 0:
-                q_val_to_pass_to_loss_fun = torch.tensor([
-                    updated_q_val,
-                    current_q_val[0, 1]
-                ]).unsqueeze(0).to(CartpoleDNNAgent.DEVICE)
-            else:
-                q_val_to_pass_to_loss_fun = torch.tensor([
-                    current_q_val[0, 0],
-                    updated_q_val
-                ]).unsqueeze(0).to(CartpoleDNNAgent.DEVICE)
-            # calculate the loss
-            loss = loss_fn(current_q_val, q_val_to_pass_to_loss_fun)
-            # propagate the result
-            self.optim.zero_grad()
-            loss.backward()
-            self.optim.step()
+        for _ in range(EPOCHS):
+            random.shuffle(self.buffer)
+            batches = [
+                self.buffer[i * BATCH_SIZE : (i + 1) * BATCH_SIZE]
+                for i in range(
+                min(8, len(self.buffer) // BATCH_SIZE)
+                )
+            ]
 
-            # update the target dnn appropriately
-            if target_update_count % UPDATE_TARGET_DNN_EVERY_N == 0:
-                self.update_target()
-            target_update_count += 1
-    
-    # Updates the algorithm at the end of episode
-    def update_the_new_way(self):
-        minibatch_size = 32
-        episodes = 3
+            for batch in batches:
+                # stack each entry into torch tensors to do further computation 
+                current_states = torch.from_numpy(np.stack([exp[0] for exp in batch], dtype=np.float32))
+                actions = torch.from_numpy(np.stack([exp[1] for exp in batch], dtype=np.int64))
+                rewards = torch.from_numpy(np.stack([exp[2] for exp in batch], dtype=np.float32))
+                next_states = torch.from_numpy(np.stack([exp[3] for exp in batch], dtype=np.float32))
+                # get the corresponding updated q val
+                updated_q = (rewards 
+                             + self.discount
+                             * torch.max(self.dnn_target(next_states).detach(), dim=1).values)
+                # from action, make a mask 
+                mask = torch.zeros(len(batch), ACTION_NUM)
+                mask.scatter_(1, actions.unsqueeze(1), 1)
+                # apply mask to obtain the relevant predictions for current states
+                compared_q = torch.sum(self.dnn_policy(current_states) * mask, dim=1)
+                # calculate loss)
+                loss = loss_fn(compared_q, updated_q)
+                # propagate the result
+                self.optim.zero_grad()
+                loss.backward()
+                self.optim.step()
 
-        if len(self.buffer) > MAX_BUFFER_SIZE:
-            self.buffer.reverse() #ensures that newest experience at end is kept
-            self.buffer = self.buffer[:MAX_BUFFER_SIZE]
-
-        random.shuffle(self.buffer)
-        
-        loss_fn = nn.MSELoss()
-        target_update_count = 0
-
-        for i in range(episodes):
-            minibatch = torch.tensor(
-                self.buffer[i * minibatch_size : (i + 1) * minibatch_size]
-            ).to(CartpoleDNNAgent.DEVICE)
-            # s, a, r, n_s
-            # take all s and compute their estimated q values
-            # take all n_s and estimate their max next reward
-            # get the corresponding updated q val by getting r
-            # from estimate of q val and action, make a mask 
-
-            # obtain the current estimate
-            current_q_val = self.estimate_q_values(self.dnn_policy, s)
-            # obtain the future best reward
-            best_next_reward = torch.max(self.estimate_q_values(self.dnn_target, n_s))
-            # obtain the updated q value based on the best reward, discount and reward r
-            updated_q_val = r + self.discount * best_next_reward
-            if a == 0:
-                q_val_to_pass_to_loss_fun = torch.tensor([
-                    updated_q_val,
-                    current_q_val[0, 1]
-                ]).unsqueeze(0).to(CartpoleDNNAgent.DEVICE)
-            else:
-                q_val_to_pass_to_loss_fun = torch.tensor([
-                    current_q_val[0, 0],
-                    updated_q_val
-                ]).unsqueeze(0).to(CartpoleDNNAgent.DEVICE)
-            # calculate the loss
-            loss = loss_fn(current_q_val, q_val_to_pass_to_loss_fun)
-            # propagate the result
-            self.optim.zero_grad()
-            loss.backward()
-            self.optim.step()
-
-            # update the target dnn appropriately
-            if target_update_count % UPDATE_TARGET_DNN_EVERY_N == 0:
-                self.update_target()
-            target_update_count += 1
-
+        # update the target dnn appropriately after one update
+        self._update_target()
+            
     # Updates the target dnn by setting its values equal to that of the policy dnn
-    def update_target(self):
+    def _update_target(self):
         self.dnn_target.load_state_dict(self.dnn_policy.state_dict())
     
     # Gets a random action in the action space; has to be re-defined for each action.
@@ -225,8 +180,3 @@ class CartpoleDNNAgent:
     # Closes the given environment
     def close(self):
         self.env.close()
-
-    def estimate_q_values(self, dnn, state):
-        state_tensor = torch.tensor(state).to(CartpoleDNNAgent.DEVICE)
-        state_with_fake_minibatch_dim = state_tensor.unsqueeze(0)
-        return dnn(state_with_fake_minibatch_dim)
