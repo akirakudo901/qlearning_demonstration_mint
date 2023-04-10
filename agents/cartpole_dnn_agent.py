@@ -63,14 +63,11 @@ class CartpoleDNNAgent:
         self.env = gymnasium.make("CartPole-v1", render_mode=r_m)
         self.learning_rate = l_r
         self.discount_rate = d_r
-        self.dnn_action_zero = CartpoleDNNAgent.DNN()
-        self.dnn_action_one = CartpoleDNNAgent.DNN()
+        self.dnn_action_zero = CartpoleDNNAgent.DNN().to(CartpoleDNNAgent.DEVICE)
+        self.dnn_action_one = CartpoleDNNAgent.DNN().to(CartpoleDNNAgent.DEVICE)
 
-        self.dnn_action_zero.to(CartpoleDNNAgent.DEVICE)
-        self.dnn_action_one.to(CartpoleDNNAgent.DEVICE)
-
-        self.dnn_action_zero_q = CartpoleDNNAgent.DNN()
-        self.dnn_action_one_q = CartpoleDNNAgent.DNN()
+        self.dnn_action_zero_q = CartpoleDNNAgent.DNN().to(CartpoleDNNAgent.DEVICE)
+        self.dnn_action_one_q = CartpoleDNNAgent.DNN().to(CartpoleDNNAgent.DEVICE)
 
         self.optim_zero = optim.SGD(self.dnn_action_zero.parameters(), lr=self.learning_rate)
         self.optim_one = optim.SGD(self.dnn_action_one.parameters(), lr=self.learning_rate)
@@ -152,7 +149,7 @@ class CartpoleDNNAgent:
         best_next_reward = torch.max(torch.tensor([
             self.estimate_q_values(self.dnn_action_zero_q, n_s).item(), 
             self.estimate_q_values(self.dnn_action_one_q, n_s).item()
-            ]))
+            ])).to(CartpoleDNNAgent.DEVICE)
 
         
         curr_q = self.estimate_q_values(action_dnn, s)
@@ -180,7 +177,7 @@ class CartpoleDNNAgent:
             best_next_reward = torch.max(torch.tensor([
                 self.estimate_q_values(self.dnn_action_zero_q, n_s).item(), 
                 self.estimate_q_values(self.dnn_action_one_q, n_s).item()
-                ]))
+                ])).to(CartpoleDNNAgent.DEVICE)
             
             curr_q = self.estimate_q_values(action_dnn, s)
             
