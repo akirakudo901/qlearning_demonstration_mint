@@ -81,6 +81,7 @@ import tqdm
 
 # import agents.cartpole_qtable_agent as cartpole_qtable_agent
 import agents.cartpole_dnn_agent as cartpole_dnn_agent
+from evaluate_progress import Progress
 
 # the environment object to be used for training and evaluation
 # env_object = cartpole_qtable_agent.CartpoleQtableAgent
@@ -88,7 +89,7 @@ import agents.cartpole_dnn_agent as cartpole_dnn_agent
 env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
-EPISODES = 5000
+EPISODES = 500
 SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
 EXPLORATION_EPISODES = EPISODES / 6
 # related to q-learning specifically?
@@ -102,12 +103,6 @@ SAVE_TRAINING_RESULT = True
 TRAIN_AGENT = True
 EVALUATE_DURING_TRAINING = (not RENDER_TRAINING) and True
 
-def save_with_creation_time_name(env):
-    creation_time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-    path = "./dnns/Cartpole_DNN_" + creation_time + "_over460"
-    env.save(path=path)
-
-
 #+++++++++++++++++++++++++++++++++++++++
 #Training
 
@@ -118,11 +113,9 @@ def train():
     r_m = "human" if RENDER_TRAINING else None
     env = env_object(l_r=LEARNING_RATE, d_r= DISCOUNT_RATE,r_m=r_m)
 
-    prior_reward = 0
     epsilon = INITIAL_EPSILON
-    last_ten_episode_reward = []
-    ten_episode_average_reward_over_time = []
-    epsilon_over_time = []
+
+    progress = Progress(last_N_reward=10, initial_epsilon=epsilon)
     
     # Single episode loop:
     for episode in tqdm.tqdm(range(EPISODES)):
@@ -136,8 +129,9 @@ def train():
 
         s, _ = env.reset()
         d = False
-        episode_reward = 0
-
+        
+        progress.at_beginning_of_episode()
+        
         # Training loop:
         while not d:
 
@@ -154,7 +148,8 @@ def train():
             # new state, new reward, done?, info
             # n_s, r, terminated, truncated, _ = env.step_and_update(a)
             n_s, r, terminated, truncated, _ = env.step(a)
-            episode_reward += r
+            
+            progress.after_each_action(new_reward=r)
 
             if terminated or truncated:
                 d = True
@@ -168,23 +163,14 @@ def train():
         
         env.update()
         
+        
         # Then adjust values accordingly
-        last_ten_episode_reward.append(episode_reward)
-        if len(last_ten_episode_reward) == 10:
-            acc = 0
-            [acc := acc + last_rewards for last_rewards in last_ten_episode_reward]
-            avg_r = acc / 10
-            ten_episode_average_reward_over_time.append(avg_r)
-            last_ten_episode_reward.pop(0)
-
-        epsilon_over_time.append(epsilon)
-
         if epsilon > 0.05: #epsilon modification
-            if episode_reward > prior_reward and episode > EXPLORATION_EPISODES:
-                epsilon = INITIAL_EPSILON * math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)
+            if episode > EXPLORATION_EPISODES:
+                epsilon = INITIAL_EPSILON * math.pow(EPSILON_DECAY_VALUE, episode - EXPLORATION_EPISODES)        
         
-        prior_reward = episode_reward
-        
+        progress.at_end_of_episode(new_epsilon=epsilon)
+
         if (episode != 0 and episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0):
             # TOREMOVE
             # print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
@@ -193,23 +179,18 @@ def train():
                 evaluate(env)
             
             if SAVE_TRAINING_RESULT:
-                save_with_creation_time_name(env)
+                creation_time = datetime.now().strftime("%Y_%m_%d_%H_%M")
+                path = "./dnns/Cartpole_DNN_" + creation_time + "_over460"
+                env.save(path=path)
+        
 
     # End of training things
     env.close() # close the training env
     if SAVE_TRAINING_RESULT:
         env.save()
     
-    _, ax = plt.subplots()
-    ax.plot(range(len(ten_episode_average_reward_over_time)), ten_episode_average_reward_over_time, linewidth=2.0)
-    plt.title("reward over time")
-    plt.show()
-
-    _, ax2 = plt.subplots()
-    ax2.plot(range(len(epsilon_over_time)), epsilon_over_time, linewidth=2.0)
-    plt.title("epsilon over time")
-    plt.show()
-
+    progress.plot_result()
+    
     return env
 
 
