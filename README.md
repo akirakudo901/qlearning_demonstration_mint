@@ -4,14 +4,15 @@ A quick introduction to general flow of RL!
 
 ## To learn the basics of reinforcement learning
 
-* *qtable_demonstration_with_cartpole.py gives an overview of RL and an example code.*
+* *qlearning_demonstration_MINT_notebook.ipynb* gives an overview of RL and an example code as Jupyter Notebook.
 
-* *environment_ttt.py in the folder environments is an example of RL environment I implemented a couple years ago.*
+* *qtable_demonstration_with_cartpole.py* holds the same content as above, but in Python code.
+
+* *environment_ttt.py* in the folder environments is an example of RL environment I implemented a couple years ago.
 Might give you some insights into designing one.
 
-I brought **example_qlearning.py** from [this online article](https://medium.com/swlh/using-q-learning-for-openais-cartpole-v1-4a216ef237df
-), works very well!
-If you want to see other people's code.
+* I brought **example_qlearning.py** from [this online article](https://medium.com/swlh/using-q-learning-for-openais-cartpole-v1-4a216ef237df
+), works very well! If you want to see other people's code.
 
 If further interested, tons of resources are online! Also feel free to ask me questions!
 
