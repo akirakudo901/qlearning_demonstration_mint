@@ -24,6 +24,7 @@ My goal for this repo was to separate the complex components of training into:
 
 If one wants to train a new algorithm on an environment, they can: 
 * define their own algorithm mimicking the definitions in the ***policy_learning_algorithms*** folder 
-* define their own environment micmiking definitions in the ***environments*** folder *we mostly followed the OpenAI gymnasium framework so far
+* define their own environment micmiking definitions in the ***environments*** folder
+  **We have mostly followed the **OpenAI gymnasium framework** so far.*
 * combine the environment and algorithm into an agent, mimicking the definitions in the ***agents*** folder
 * use the code in main.py to train the algorithms.
