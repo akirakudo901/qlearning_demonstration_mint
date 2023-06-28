@@ -1,5 +1,4 @@
 # **Introduction to reinforcement learning (RL) with code**
-# **Introduction to reinforcement learning (RL) with code**
 
 A quick introduction to general flow of RL!
 
