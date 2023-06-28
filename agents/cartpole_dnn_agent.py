@@ -2,9 +2,6 @@
 Cart pole agent that learns through deep neural networks, combining a DNN with 
 an environment.
 
-WILL DO:
-1) First fuse the two DNNs together
-2) Then clean up the code a bit to be more organized
 """
 
 from datetime import datetime
@@ -17,7 +14,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-DNN_SAVE_FOLDER = "./dnns"
+DNN_SAVE_FOLDER = "./trained_agents/dnns"
 
 UPDATE_TARGET_DNN_EVERY_N = 4096
 MAX_BUFFER_SIZE = 4096
@@ -48,7 +45,9 @@ class CartpoleDNNAgent:
     class DNN(nn.Module):
 
         def __init__(self):
-            # Initializes a new DNN.
+            """
+            Initializes a new Deep neural network (DNN).
+            """
             super(CartpoleDNNAgent.DNN, self).__init__()
             
             self.fc_relu_stack = nn.Sequential(  
@@ -103,14 +102,18 @@ class CartpoleDNNAgent:
         self.state, info = self.env.reset()
         return self.state, info
     
-    # Takes a step in the environment with the given action while sampling and keeping
-    # experience in buffer. Returns:
-    #  - the resulting next state
-    #  - the reward as a result of the action
-    #  - if the episode was corretly terminated (boolean; terminated)
-    #  - if the episode was incorrectly terminated (boolean; truncated)
-    #  - additional info
     def step(self, action):
+        """
+        Takes a step in the environment with the given action while sampling and keeping
+        experience in buffer. Returns:
+         - the resulting next state
+         - the reward as a result of the action
+         - if the episode was corretly terminated (boolean; terminated)
+         - if the episode was incorrectly terminated (boolean; truncated)
+         - additional info
+
+        :param action: The action taken by the agent.
+        """
         s_before_action = self.state
         n_s, r, terminated, truncated, info = self.env.step(action)
         self.state = n_s

@@ -90,8 +90,8 @@ env_object = cartpole_dnn_agent.CartpoleDNNAgent
 
 # parameters related to training
 EPISODES = 500
-SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES / 5
-EXPLORATION_EPISODES = EPISODES / 6
+SHOW_PROGRESS_EVERY_N_EPISODES = EPISODES // 5
+EXPLORATION_EPISODES = EPISODES // 6
 # related to q-learning specifically?
 LEARNING_RATE = 0.005
 DISCOUNT_RATE = 0.95
@@ -159,10 +159,7 @@ def train():
         
         # Once episode is over:
         # Update learning algorithm
-        # SPECIFICS: HOW IS THE QTABLE UPDATED?
-        
         env.update()
-        
         
         # Then adjust values accordingly
         if epsilon > 0.05: #epsilon modification
@@ -172,17 +169,13 @@ def train():
         progress.at_end_of_episode(new_epsilon=epsilon)
 
         if (episode != 0 and episode % SHOW_PROGRESS_EVERY_N_EPISODES == 0):
-            # TOREMOVE
-            # print("\naction_zero_parameters: \n", list(env.dnn_action_zero.parameters()))
-            # print("\naction_one_parameters: \n", list(env.dnn_action_one.parameters()))
             if EVALUATE_DURING_TRAINING:
                 evaluate(env)
             
             if SAVE_TRAINING_RESULT:
                 creation_time = datetime.now().strftime("%Y_%m_%d_%H_%M")
-                path = "./dnns/Cartpole_DNN_" + creation_time + "_over460"
+                path = "./dnns/Cartpole_DNN_" + creation_time
                 env.save(path=path)
-        
 
     # End of training things
     env.close() # close the training env
@@ -204,9 +197,8 @@ def evaluate(agent=None, path=None):
         agent = env_object()
         # agent.load(path)
         agent.load(path=path)
-    else:
-        pass
-        # print("\n agent is not None; path will not be considered. \n")
+    # else:
+    #     print("\n agent is not None; path will not be considered. \n")
 
     # Evaluation loop:
     env_eval = env_object(r_m="human")
@@ -214,7 +206,6 @@ def evaluate(agent=None, path=None):
     terminated = truncated = False
 
     while not (terminated or truncated):
-
         # get optimal action by agent
         a = agent.get_optimal_action(s)
 
@@ -224,9 +215,7 @@ def evaluate(agent=None, path=None):
     env_eval.close()
 
 if __name__ == "__main__":
-    #First train, details in train function
-    if TRAIN_AGENT and True:
-        env = train()
-    # Evaluation? See it in action, probably + store the result in some way & allow reading.
-    evaluate(env)
-    # evaluate(path="dnns\Cartpole_DNN_best_performing.pth")
+    if TRAIN_AGENT and False:
+        env = train()    
+    # evaluate(env)
+    evaluate(path="dnns\Cartpole_DNN_best_performing.pth")
