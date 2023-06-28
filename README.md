@@ -17,10 +17,10 @@ If further interested, tons of resources are online! Also feel free to ask me qu
 
 ## How this repo is structured
 My goal for this repo was to separate the complex components of training into:
-* **the environment**, where different agents train
-* **the policy learning algorithms**, which learn the task (e.g. Q-table, DDQN)
-* **the agent**, which combines a policy learning algorithm and environment into a specific way to realize learning
-* **the training / evaluation loops**, which happen roughly similarly for many agents / environments (e.g. epsilon-greedy learning)
+* the **environment**, where different agents train
+* the **policy learning algorithms**, which learn the task (e.g. Q-table, DDQN)
+* the **agent**, which combines a policy learning algorithm and environment into a specific way to realize learning
+* the **training / evaluation loops**, which happen roughly similarly for many agents / environments (e.g. epsilon-greedy learning)
 
 If one wants to train a new algorithm on an environment, they can: 
 * define their own algorithm mimicking the definitions in the ***policy_learning_algorithms*** folder 
