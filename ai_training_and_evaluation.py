@@ -6,6 +6,7 @@ Tried to abstract away a lot of parts (don't know if it's gonna be useful).
 
 import math, random
  
+from matplotlib import animation
 import matplotlib.pyplot as plt
 import tqdm
 
@@ -119,6 +120,22 @@ def train_epsilon_greedy(
 #+++++++++++++++++++++++++++++++++++++++
 #Evaluating
 
+# First, define a function allowing to save gifs
+# Great code from here[https://gist.github.com/botforge/64cbb71780e6208172bbf03cd9293553]!
+def save_frames_as_gif(frames, path='./training_gifs/', filename='animation.gif'):
+
+    #Mess with this to change frame size
+    plt.figure(figsize=(frames[0].shape[1] / 72.0, frames[0].shape[0] / 72.0), dpi=72)
+
+    patch = plt.imshow(frames[0])
+    plt.axis('off')
+
+    def animate(i):
+        patch.set_data(frames[i])
+
+    anim = animation.FuncAnimation(plt.gcf(), animate, frames = len(frames), interval=50)
+    anim.save(path + filename, writer='imagemagick', fps=60)
+
 # Runs a full cycle of the environment given the agent or a path. 
 # If a path is given, the agent object will load the path.
 def evaluate(
@@ -149,3 +166,49 @@ def evaluate(
         s, _, terminated, truncated, _ = env_eval.step(a)
 
     env_eval.close()
+
+
+def evaluate_while_returning_gif(
+        env_agent_merged_object,
+        trained_agent,
+        path : str = None,
+        gif_name : str = 'animation.gif'
+        ):
+    
+    # load the path if it is given and not None 
+    if path != None:
+        try: 
+            trained_agent.load(path)
+            print("\n path has been loaded! \n")
+        except:
+            raise Exception("Something went wrong when loading the path into the agent...")
+    
+    # stores frames to be stored as gif
+    frames = []
+
+    # Evaluation loop:
+    env_eval = env_agent_merged_object(r_m="rgb_array")
+    s, _ = env_eval.reset() #reset the environment
+    terminated = truncated = False
+
+    while not (terminated or truncated):
+
+        # get optimal action by agent
+        a = trained_agent.get_optimal_action(s)
+
+        # update env accordingly
+        s, _, terminated, truncated, _ = env_eval.step(a)
+        
+        #Render to frames buffer
+        frames.append(env_eval.env.render())
+
+    env_eval.close()
+    
+    save_frames_as_gif(frames=frames, filename=gif_name)
+
+
+from agents.cartpole_dnn_agent import CartpoleDNNAgent
+evaluate_while_returning_gif(
+    env_agent_merged_object=CartpoleDNNAgent, 
+    trained_agent=CartpoleDNNAgent(), 
+    path="trained_agents\dnns\Cartpole_DNN_best_performing.pth")
