@@ -9,7 +9,7 @@ from ai_training_and_evaluation import train_epsilon_greedy, evaluate
 parameters_for_training = {
     "DDQN" : {
         "env_agent_merged_object" : CartpoleDNNAgent,
-        "episodes" : 1000,
+        "episodes" : 2500,
         "exploration_episodes" : 500 // 6,
         "learning_rate" : 5e-3,
         "discount_rate" : 0.95,
@@ -23,7 +23,7 @@ def train_and_evaluate_with_this_agent(agent_name : str):
     if agent_name not in parameters_for_training.keys():
         raise Exception("That agent name is not in the dictionary!")
     
-    params = parameters_for_training["DDQN"]
+    params = parameters_for_training[agent_name]
 
     trained_agent = train_epsilon_greedy(
         env_agent_merged_object=params["env_agent_merged_object"], 

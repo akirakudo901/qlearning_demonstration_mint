@@ -72,7 +72,7 @@ class CartpoleDNNAgent:
         self.dnn_policy = dnn().to(CartpoleDNNAgent.DEVICE)
         self.dnn_target = dnn().to(CartpoleDNNAgent.DEVICE)
 
-        self.optim = optim.SGD(self.dnn_policy.parameters(), lr=l_r)
+        self.optim = optim.Adam(self.dnn_policy.parameters(), lr=l_r)
         
         self.state = None
         self.buffer = []
