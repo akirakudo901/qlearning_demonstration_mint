@@ -10,7 +10,7 @@ parameters_for_training = {
     "DDQN" : {
         "env_agent_merged_object" : CartpoleDNNAgent,
         "episodes" : 2500,
-        "exploration_episodes" : 500 // 6,
+        "exploration_episodes" : 2500 // 6,
         "learning_rate" : 5e-3,
         "discount_rate" : 0.95,
         "initial_epsilon" : 1.0,
